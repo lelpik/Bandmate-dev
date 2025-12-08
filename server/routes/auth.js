@@ -1,5 +1,5 @@
 const express = require('express');
-
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../db');
 
@@ -14,12 +14,13 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    // Store plaintext password
+    const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
-      [username, email, password]
+      [username, email, hashedPassword]
     );
 
+    // MariaDB returns insertId as BigInt, convert to string or number
     const userId = Number(result.insertId);
 
     const token = jwt.sign({ id: userId, username }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '24h' });
@@ -46,13 +47,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    // Compare plaintext password
-    if (password !== user.password_hash) {
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
     const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '24h' });
     
+    // Don't send password hash back
     const { password_hash, ...userWithoutPassword } = user;
     res.json({ token, user: userWithoutPassword });
   } catch (error) {
