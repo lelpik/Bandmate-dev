@@ -7,16 +7,40 @@ const Matching = () => {
   const [profiles, setProfiles] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showPreferences, setShowPreferences] = useState(true);
+  const [preferences, setPreferences] = useState({
+    instruments: [],
+    genres: []
+  });
+
+  const availableInstruments = ['Guitar', 'Bass', 'Drums', 'Vocals', 'Piano', 'Keys', 'Saxophone', 'Trumpet'];
+  const availableGenres = ['Rock', 'Jazz', 'Blues', 'Funk', 'Metal', 'Pop', 'Indie', 'Folk'];
 
   useEffect(() => {
-    fetchProfiles();
-  }, []);
+    if (!showPreferences) {
+      fetchProfiles();
+    }
+  }, [showPreferences]);
 
   const fetchProfiles = async () => {
     try {
       setLoading(true);
       const res = await api.get('/users/discover');
-      setProfiles(res.data);
+      let filteredProfiles = res.data;
+
+      // Apply client-side filtering based on preferences
+      if (preferences.instruments.length > 0) {
+        filteredProfiles = filteredProfiles.filter(p => 
+          p.instruments && p.instruments.some(i => preferences.instruments.includes(i))
+        );
+      }
+      if (preferences.genres.length > 0) {
+        filteredProfiles = filteredProfiles.filter(p => 
+          p.genres && p.genres.some(g => preferences.genres.includes(g))
+        );
+      }
+
+      setProfiles(filteredProfiles);
     } catch (error) {
       console.error('Error fetching profiles:', error);
       toast.error('Failed to load profiles');
@@ -49,6 +73,71 @@ const Matching = () => {
     }
   };
 
+  const togglePreference = (type, value) => {
+    setPreferences(prev => {
+      const current = prev[type];
+      const updated = current.includes(value)
+        ? current.filter(item => item !== value)
+        : [...current, value];
+      return { ...prev, [type]: updated };
+    });
+  };
+
+  if (showPreferences) {
+    return (
+      <div className="h-[calc(100vh-64px)] flex items-center justify-center p-4">
+        <div className="bg-dark-light p-8 rounded-3xl max-w-md w-full border border-white/10 shadow-2xl">
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">What are you looking for?</h2>
+          
+          <div className="mb-6">
+            <h3 className="text-gray-400 text-sm font-semibold mb-3 uppercase tracking-wider">Instruments</h3>
+            <div className="flex flex-wrap gap-2">
+              {availableInstruments.map(inst => (
+                <button
+                  key={inst}
+                  onClick={() => togglePreference('instruments', inst)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    preferences.instruments.includes(inst)
+                      ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                      : 'bg-dark border border-gray-700 text-gray-400 hover:border-gray-500'
+                  }`}
+                >
+                  {inst}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-gray-400 text-sm font-semibold mb-3 uppercase tracking-wider">Genres</h3>
+            <div className="flex flex-wrap gap-2">
+              {availableGenres.map(genre => (
+                <button
+                  key={genre}
+                  onClick={() => togglePreference('genres', genre)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    preferences.genres.includes(genre)
+                      ? 'bg-secondary text-white shadow-lg shadow-secondary/25'
+                      : 'bg-dark border border-gray-700 text-gray-400 hover:border-gray-500'
+                  }`}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowPreferences(false)}
+            className="w-full py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-bold text-lg hover:opacity-90 transition-opacity shadow-lg"
+          >
+            Start Matching
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) return <div className="flex justify-center items-center h-full text-white">Loading...</div>;
 
   if (currentIndex >= profiles.length) {
@@ -60,11 +149,11 @@ const Matching = () => {
         <button 
           onClick={() => {
             setCurrentIndex(0);
-            fetchProfiles();
+            setShowPreferences(true);
           }}
           className="px-6 py-2 bg-dark-light border border-gray-700 rounded-lg text-white hover:bg-dark-light/80"
         >
-          Refresh
+          Update Preferences
         </button>
       </div>
     );
@@ -78,18 +167,18 @@ const Matching = () => {
         <ProfileCard user={currentProfile} isPreview={true} />
       </div>
 
-      <div className="flex gap-6 w-full max-w-sm">
+      <div className="flex gap-6">
         <button
           onClick={() => handleSwipe('pass')}
-          className="flex-1 py-4 border border-red-900 text-red-500 hover:bg-red-900/20 font-mono font-bold"
+          className="w-16 h-16 rounded-full bg-dark-light border-2 border-red-500 text-red-500 text-3xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-lg hover:scale-110"
         >
-          [PASS]
+          ✕
         </button>
         <button
           onClick={() => handleSwipe('like')}
-          className="flex-1 py-4 border border-green-900 text-green-500 hover:bg-green-900/20 font-mono font-bold"
+          className="w-16 h-16 rounded-full bg-dark-light border-2 border-green-500 text-green-500 text-3xl flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-lg hover:scale-110"
         >
-          [LIKE]
+          ♥
         </button>
       </div>
     </div>
