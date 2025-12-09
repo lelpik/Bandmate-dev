@@ -16,10 +16,13 @@ const ProfileSetup = () => {
   const [selectedInstruments, setSelectedInstruments] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedInterests, setSelectedInterests] = useState([]);
+  const [location, setLocation] = useState({ lat: null, lon: null });
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
 
-
+  const [profileImage, setProfileImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
+  const fileInputRef = React.useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -39,8 +42,8 @@ const ProfileSetup = () => {
       setSelectedInstruments(parseList(user.instruments));
       setSelectedGenres(parseList(user.genres));
       setSelectedInterests(parseList(user.interests));
-
-
+      setLocation({ lat: user.location_lat, lon: user.location_lon });
+      setPreviewImage(user.profile_picture);
     }
   }, [user]);
 
@@ -54,9 +57,29 @@ const ProfileSetup = () => {
     }
   };
 
+  const getLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error("Error getting location", error);
+        }
+      );
+    }
+  };
 
-
-
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,7 +92,9 @@ const ProfileSetup = () => {
       formData.append('instruments', JSON.stringify(selectedInstruments));
       formData.append('genres', JSON.stringify(selectedGenres));
       formData.append('interests', JSON.stringify(selectedInterests));
-
+      if (location.lat) formData.append('location_lat', location.lat);
+      if (location.lon) formData.append('location_lon', location.lon);
+      if (profileImage) formData.append('profile_picture', profileImage);
 
       await api.put('/users/me', formData);
       await refreshUser();
@@ -89,7 +114,30 @@ const ProfileSetup = () => {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-
+          {/* Profile Image Upload */}
+          <div className="flex flex-col items-center mb-6">
+            <div 
+              className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 cursor-pointer relative group"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <img 
+                src={previewImage || `https://ui-avatars.com/api/?name=${user?.username}&background=random`} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-white text-2xl">📷</span>
+              </div>
+            </div>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleImageChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
+            <p className="text-gray-400 text-sm mt-2">Tap to change photo</p>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -124,7 +172,16 @@ const ProfileSetup = () => {
                 placeholder="25"
               />
             </div>
-
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Location</label>
+              <button
+                type="button"
+                onClick={getLocation}
+                className="w-full px-4 py-2 bg-dark/50 border border-gray-700 rounded-lg hover:bg-dark/80 text-white flex items-center justify-center gap-2"
+              >
+                📍 {location.lat ? 'Update Location' : 'Get Location'}
+              </button>
+            </div>
           </div>
 
           <div>

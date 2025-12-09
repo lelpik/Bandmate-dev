@@ -8,7 +8,7 @@ const router = express.Router();
 // Get current user profile
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const rows = await pool.query('SELECT id, username, nickname, email, bio, instruments, genres, interests, age, social_links, profile_picture FROM users WHERE id = ?', [req.user.id]);
+    const rows = await pool.query('SELECT id, username, nickname, email, bio, location_lat, location_lon, instruments, genres, interests, age, social_links, profile_picture FROM users WHERE id = ?', [req.user.id]);
     const user = rows[0];
     
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -39,15 +39,28 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
+// Configure Multer (Same as before)
+const multer = require('multer');
+const path = require('path');
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, 'profile-' + Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
+
 // Update profile
-router.put('/me', authenticateToken, async (req, res) => {
+router.put('/me', authenticateToken, upload.single('profile_picture'), async (req, res) => {
   console.log('Received profile update request');
   console.log('Body:', req.body);
   console.log('File:', req.file);
   
-  const { username, nickname, bio, instruments, genres, interests, age, social_links } = req.body;
+  const { username, nickname, bio, location_lat, location_lon, instruments, genres, interests, age, social_links } = req.body;
   const userId = req.user.id;
-
+  const file = req.file;
 
   try {
     // Parse JSON fields if they are strings (Multipart form data sends everything as strings)
@@ -60,28 +73,37 @@ router.put('/me', authenticateToken, async (req, res) => {
     if (parsedInstruments && parsedInstruments.length > 5) return res.status(400).json({ error: 'Max 5 instruments' });
     if (parsedGenres && parsedGenres.length > 5) return res.status(400).json({ error: 'Max 5 genres' });
 
-
+    let profilePictureUrl = req.body.profile_picture; // If sending URL directly (legacy)
+    if (file) {
+      profilePictureUrl = `http://localhost:3000/uploads/${file.filename}`;
+    }
 
     await pool.query(`
       UPDATE users
       SET username = COALESCE(?, username),
           nickname = COALESCE(?, nickname),
-        bio = COALESCE(?, bio),
-        instruments = COALESCE(?, instruments),
-        genres = COALESCE(?, genres),
-        interests = COALESCE(?, interests),
-        age = COALESCE(?, age),
-        social_links = COALESCE(?, social_links)
+          bio = COALESCE(?, bio),
+          location_lat = COALESCE(?, location_lat),
+          location_lon = COALESCE(?, location_lon),
+          instruments = COALESCE(?, instruments),
+          genres = COALESCE(?, genres),
+          interests = COALESCE(?, interests),
+          age = COALESCE(?, age),
+          social_links = COALESCE(?, social_links),
+          profile_picture = COALESCE(?, profile_picture)
       WHERE id = ?
     `, [
       username,
       nickname,
       bio,
+      location_lat,
+      location_lon,
       JSON.stringify(parsedInstruments),
       JSON.stringify(parsedGenres),
       JSON.stringify(parsedInterests),
       age,
       JSON.stringify(parsedSocialLinks),
+      profilePictureUrl,
       userId
     ]);
     
@@ -156,7 +178,7 @@ router.get('/discover', authenticateToken, async (req, res) => {
   try {
     // Get users who are NOT the current user and have NOT been swiped on by the current user
     const users = await pool.query(`
-      SELECT id, username, nickname, bio, instruments, genres, interests, age, social_links, profile_picture 
+      SELECT id, username, nickname, bio, location_lat, location_lon, instruments, genres, interests, age, social_links, profile_picture 
       FROM users 
       WHERE id != ? 
       AND id NOT IN (SELECT likee_id FROM swipes WHERE liker_id = ?)
