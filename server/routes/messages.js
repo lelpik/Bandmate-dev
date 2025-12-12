@@ -9,7 +9,7 @@ router.get("/conversations", authenticateToken, async (req, res) => {
   try {
     // Get users who have matched with current user (using matches table)
     const conversations = await pool.query(`
-      SELECT u.id, u.username, u.nickname, u.profile_picture, u.bio, u.age, u.instruments, u.genres, u.interests,
+      SELECT u.id, u.username, u.nickname, u.profile_picture, u.bio, u.age, u.instruments, u.genres, u.interests, u.location_lat, u.location_lon,
              (SELECT content FROM messages WHERE (sender_id = u.id AND receiver_id = ?) OR (sender_id = ? AND receiver_id = u.id) ORDER BY created_at DESC LIMIT 1) as last_message,
              (SELECT created_at FROM messages WHERE (sender_id = u.id AND receiver_id = ?) OR (sender_id = ? AND receiver_id = u.id) ORDER BY created_at DESC LIMIT 1) as last_message_time
       FROM users u
@@ -62,27 +62,51 @@ router.get("/:userId", authenticateToken, async (req, res) => {
   }
 });
 
-// Send message (text only)
-router.post("/", authenticateToken, async (req, res) => {
-  const { receiver_id, content } = req.body;
+// Configure Multer
+const multer = require('multer');
+const path = require('path');
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
 
-  if (!receiver_id || !content) {
+// Send message (supports file upload)
+router.post("/", authenticateToken, upload.single('audio'), async (req, res) => {
+  console.log('Received message send request');
+  console.log('Body:', req.body);
+  console.log('File:', req.file);
+
+  const { receiver_id, content, type } = req.body; // type: 'text' or 'audio'
+  const file = req.file;
+
+  if (!receiver_id || (!content && !file)) {
     return res.status(400).json({ error: "Missing fields" });
   }
 
-  const messageType = 'text';
+  let messageContent = content;
+  let messageType = type || 'text';
+
+  if (file) {
+    messageContent = file.filename; // Store filename
+    messageType = 'audio';
+  }
 
   try {
     const result = await pool.query(
       "INSERT INTO messages (sender_id, receiver_id, content, type) VALUES (?, ?, ?, ?)",
-      [req.user.id, receiver_id, content, messageType]
+      [req.user.id, receiver_id, messageContent, messageType]
     );
 
     const newMessage = {
       id: Number(result.insertId),
       sender_id: req.user.id,
       receiver_id,
-      content: content,
+      content: messageContent,
       type: messageType,
       created_at: new Date().toISOString(),
     };
