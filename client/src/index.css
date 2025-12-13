@@ -4,26 +4,6 @@
 
 @layer base {
   body {
-    @apply bg-black text-green-400 font-mono;
-  }
-
-  /* Reset all rounded corners */
-  * {
-    border-radius: 0 !important;
-  }
-
-  /* Remove all shadows */
-  * {
-    box-shadow: none !important;
-  }
-}
-
-@layer components {
-  .btn-primary {
-    @apply border border-green-400 text-green-400 hover:bg-green-400 hover:text-black px-4 py-2 font-bold transition-colors;
-  }
-
-  .card {
-    @apply border border-white/20 bg-black p-4;
+    @apply bg-dark text-white font-sans;
   }
 }
