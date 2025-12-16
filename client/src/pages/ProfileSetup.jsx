@@ -84,6 +84,16 @@ const ProfileSetup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+    if (!age) {
+        toast.error('Age is required');
+        return;
+      }
+      
+      if (selectedGenres.length === 0) {
+        toast.error('Please select at least one genre');
+        return;
+      }
+
       const formData = new FormData();
       formData.append('bio', bio);
       formData.append('age', age);

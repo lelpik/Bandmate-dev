@@ -62,7 +62,7 @@ const Dashboard = () => {
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-dark-light border-r border-white/10 flex flex-col">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+          <h1 className="text-2xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
             Bandmate
           </h1>
         </div>

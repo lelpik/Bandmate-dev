@@ -241,7 +241,7 @@ const MessagesLayout = () => {
           {conversations.length === 0 && (
             <div className="p-8 text-center text-gray-500">
               <p>No matches yet.</p>
-              <Link to="/matching" className="text-primary hover:underline mt-2 block">Go swipe!</Link>
+              <Link to="/" className="text-primary hover:underline mt-2 block">Go swipe!</Link>
             </div>
           )}
         </div>

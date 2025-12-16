@@ -13,6 +13,17 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
+  // Password Strength Validation
+  if (password.length < 7) {
+    return res.status(400).json({ error: 'Password must be at least 7 characters long' });
+  }
+  if (!/[0-9]/.test(password)) {
+    return res.status(400).json({ error: 'Password must contain at least one number' });
+  }
+  if (!/[A-Z]/.test(password)) {
+    return res.status(400).json({ error: 'Password must contain at least one uppercase letter' });
+  }
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
