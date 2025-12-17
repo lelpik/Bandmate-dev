@@ -13,6 +13,13 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
+  // Allowed Domains Check
+  const allowedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'proton.me', 'aol.com'];
+  const domain = email.split('@')[1];
+  if (!domain || !allowedDomains.includes(domain)) {
+      return res.status(400).json({ error: 'Email provider not allowed. Please use a major provider.' });
+  }
+
   // Password Strength Validation
   if (password.length < 7) {
     return res.status(400).json({ error: 'Password must be at least 7 characters long' });

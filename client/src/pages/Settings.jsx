@@ -13,6 +13,36 @@ const Settings = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    // Validation
+    const allowedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'proton.me', 'aol.com'];
+    if (email && email !== user.email) {
+        const domain = email.split('@')[1];
+        if (!domain || !allowedDomains.includes(domain)) {
+            toast.error(`Email provider not allowed. Please use a major provider (e.g., Gmail, Yahoo, Outlook).`);
+            setLoading(false);
+            return;
+        }
+    }
+
+    if (newPassword) {
+        if (newPassword.length < 7) {
+            toast.error('New password must be at least 7 characters long');
+            setLoading(false);
+            return;
+        }
+        if (!/[0-9]/.test(newPassword)) {
+            toast.error('New password must contain at least one number');
+            setLoading(false);
+            return;
+        }
+        if (!/[A-Z]/.test(newPassword)) {
+            toast.error('New password must contain at least one uppercase letter');
+            setLoading(false);
+            return;
+        }
+    }
+
     try {
       await api.put('/users/account', {
         email,

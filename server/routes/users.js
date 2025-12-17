@@ -13,12 +13,6 @@ router.get('/me', authenticateToken, async (req, res) => {
     
     if (!user) return res.status(404).json({ error: 'User not found' });
     
-    // MariaDB driver might return JSON fields as objects already if column type is JSON, 
-    // but we defined them as JSON in SQL so let's check.
-    // Actually, in the create table script they are JSON type.
-    // The driver usually parses JSON columns automatically.
-    // But let's be safe and check if they are strings before parsing, or just send them if they are objects.
-    
     // Helper to ensure parsed JSON
     const parseIfNeeded = (val) => {
         if (typeof val === 'string') {
@@ -126,6 +120,15 @@ router.put('/account', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Nothing to update' });
   }
 
+  // Allowed Domains Check for email update
+  if (email) {
+      const allowedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'proton.me', 'aol.com'];
+      const domain = email.split('@')[1];
+      if (!domain || !allowedDomains.includes(domain)) {
+          return res.status(400).json({ error: 'Email provider not allowed. Please use a major provider.' });
+      }
+  }
+
   try {
     // Verify current password if changing sensitive info
     if (newPassword || email) {
@@ -151,6 +154,17 @@ router.put('/account', authenticateToken, async (req, res) => {
     }
 
     if (newPassword) {
+        // Password Strength Validation
+        if (newPassword.length < 7) {
+            return res.status(400).json({ error: 'New password must be at least 7 characters long' });
+        }
+        if (!/[0-9]/.test(newPassword)) {
+            return res.status(400).json({ error: 'New password must contain at least one number' });
+        }
+        if (!/[A-Z]/.test(newPassword)) {
+            return res.status(400).json({ error: 'New password must contain at least one uppercase letter' });
+        }
+
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       updateQuery += 'password_hash = ?, ';
       params.push(hashedPassword);

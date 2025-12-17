@@ -20,6 +20,14 @@ const Register = () => {
       return;
     }
 
+    // Allowed Domains Check
+    const allowedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'proton.me', 'aol.com'];
+    const domain = email.split('@')[1];
+    if (!allowedDomains.includes(domain)) {
+        setError(`Email provider not allowed. Please use a major provider (e.g., Gmail, Yahoo, Outlook).`);
+        return;
+    }
+
     // Password Strength Validation
     if (password.length < 7) {
       setError('Password must be at least 7 characters long');
