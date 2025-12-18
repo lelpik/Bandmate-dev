@@ -69,7 +69,7 @@ router.put('/me', authenticateToken, upload.single('profile_picture'), async (re
 
     let profilePictureUrl = req.body.profile_picture; // If sending URL directly (legacy)
     if (file) {
-      profilePictureUrl = `http://localhost:3000/uploads/${file.filename}`;
+      profilePictureUrl = `/uploads/${file.filename}`;
     }
 
     await pool.query(`

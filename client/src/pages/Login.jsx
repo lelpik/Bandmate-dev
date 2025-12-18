@@ -15,7 +15,9 @@ const Login = () => {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError('Invalid credentials');
+      console.error("Login Error Details:", err);
+      const msg = err.response?.data?.error || err.message || 'Login failed';
+      setError(msg);
     }
   };
 

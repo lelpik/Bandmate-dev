@@ -135,7 +135,7 @@ const ChatWindow = () => {
                 {msg.type === 'audio' ? (
                    <div className="flex items-center gap-2">
                      <span className="text-2xl">🎵</span>
-                     <audio controls src={`http://localhost:3000/uploads/${msg.content}`} className="w-48 h-8" />
+                     <audio controls src={`/uploads/${msg.content}`} className="w-48 h-8" />
                    </div>
                 ) : (
                   <p>{msg.content}</p>

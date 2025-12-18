@@ -7,11 +7,27 @@ const path = require('path');
 
 dotenv.config();
 
-const app = express();
+const { pool } = require('./db');
+
+app.use((req, res, next) => {
+  console.log(`[REQUEST_DEBUG] ${req.method} ${req.url} | Origin: ${req.headers.origin}`);
+  next();
+});
+
+// Test DB Connection
+pool.getConnection()
+  .then(conn => {
+    console.log('[DB_DEBUG] Database connection successful!');
+    conn.release();
+  })
+  .catch(err => {
+    console.error('[DB_DEBUG] Database connection FAILED:', err);
+  });
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5175",
+    origin: ["http://localhost:5173", "http://localhost:5153", "https://bandmate.afterdarknetwork.ro"],
     methods: ["GET", "POST"]
   }
 });
@@ -43,7 +59,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

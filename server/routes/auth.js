@@ -56,19 +56,24 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
+  console.log(`[LOGIN_DEBUG] Attempt for email: ${email}`);
 
   try {
     const rows = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     const user = rows[0];
 
     if (!user) {
+      console.log(`[LOGIN_DEBUG] User not found for email: ${email}`);
       return res.status(400).json({ error: 'Invalid credentials' });
     }
+    console.log(`[LOGIN_DEBUG] User found: ${user.username} (ID: ${user.id})`);
 
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
+      console.log(`[LOGIN_DEBUG] Password mismatch for user: ${user.username}`);
       return res.status(400).json({ error: 'Invalid credentials' });
     }
+    console.log(`[LOGIN_DEBUG] Password verified for user: ${user.username}`);
 
     const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '24h' });
     
@@ -76,7 +81,7 @@ router.post('/login', async (req, res) => {
     const { password_hash, ...userWithoutPassword } = user;
     res.json({ token, user: userWithoutPassword });
   } catch (error) {
-    console.error(error);
+    console.error('[LOGIN_DEBUG] Server error during login:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
