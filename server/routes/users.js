@@ -196,7 +196,7 @@ router.get('/discover', authenticateToken, async (req, res) => {
       FROM users 
       WHERE id != ? 
       AND id NOT IN (SELECT likee_id FROM swipes WHERE liker_id = ?)
-      LIMIT 20
+      LIMIT 100
     `, [req.user.id, req.user.id]);
     
     // Helper to ensure parsed JSON

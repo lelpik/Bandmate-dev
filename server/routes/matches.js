@@ -62,7 +62,8 @@ router.post('/swipe', authenticateToken, async (req, res) => {
     res.json({ success: true, isMatch });
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'Already swiped on this user' });
+      // Treat duplicate as success (idempotent) so client moves on
+      return res.json({ success: true, message: 'Already swiped' });
     }
     console.error(error);
     res.status(500).json({ error: 'Server error' });

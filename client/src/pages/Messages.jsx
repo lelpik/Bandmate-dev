@@ -133,7 +133,7 @@ const ChatWindow = () => {
                 isMe ? 'bg-primary text-white rounded-br-none' : 'bg-dark-light text-gray-200 rounded-bl-none'
               }`}>
                 {msg.type === 'audio' ? (
-                   <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-2">
                      <span className="text-2xl">🎵</span>
                      <audio controls src={`/uploads/${msg.content}`} className="w-48 h-8" />
                    </div>
