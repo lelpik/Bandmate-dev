@@ -16,10 +16,10 @@ async function setup() {
     conn = await mariadb.createConnection(config);
     console.log("Connected to MariaDB");
 
-    await conn.query("CREATE DATABASE IF NOT EXISTS BandmateRAU");
-    console.log("Created Database BandmateRAU");
+    await conn.query("CREATE DATABASE IF NOT EXISTS bandmate");
+    console.log("Created Database bandmate");
 
-    await conn.query("USE BandmateRAU");
+    await conn.query("USE bandmate");
 
     await conn.query("DROP TABLE IF EXISTS notifications");
     await conn.query("DROP TABLE IF EXISTS messages");
@@ -86,6 +86,14 @@ async function setup() {
         is_read BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS analytics_events (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        event_type VARCHAR(50) NOT NULL,
+        event_data JSON,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
 

@@ -68,6 +68,15 @@ CREATE TABLE IF NOT EXISTS notifications (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Analytics Events Table
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  event_type VARCHAR(50) NOT NULL,
+  event_data JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Seed Data
 INSERT INTO users (username, nickname, email, password_hash, bio, instruments, genres, interests, age, profile_picture) VALUES
 ('jimi_hendrix', 'Jimi', 'jimi@example.com', '$2b$10$qFia0YXLM1HXsXpSTJH2C.UcWyBNlCU/i9II7KFuLvhCnAj6K6dAK', 'Guitar legend. Looking for a band to change the world.', '["Guitar", "Vocals"]', '["Rock", "Blues"]', '["Vinyl Collecting", "Meditation"]', 27, 'https://ui-avatars.com/api/?name=Jimi+Hendrix&background=0D8ABC&color=fff'),

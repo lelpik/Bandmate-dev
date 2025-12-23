@@ -23,4 +23,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export const logEvent = async (eventType, eventData = {}) => {
+  console.log(`[Analytics-Client] Logging event: ${eventType}`, eventData);
+  try {
+    const res = await api.post('/analytics/log', { event_type: eventType, event_data: eventData });
+    console.log('[Analytics-Client] Log success:', res.data);
+  } catch (error) {
+    console.error('[Analytics-Client] Log failed:', error);
+  }
+};
+
+api.logEvent = logEvent;
+
 export default api;

@@ -38,6 +38,17 @@ router.post('/swipe', authenticateToken, async (req, res) => {
           [Math.min(liker_id, likee_id), Math.max(liker_id, likee_id)]
         );
 
+        // Log Analytics: Match Formed
+        try {
+          // Log for liker
+          await pool.query(
+            "INSERT INTO analytics_events (user_id, event_type, event_data) VALUES (?, ?, ?)",
+            [liker_id, 'match_formed', JSON.stringify({ with_user: likee_id })]
+          );
+        } catch (err) {
+          console.error('Analytics Log Error (Match):', err);
+        }
+
         // Create notification for the other user
         // Need to fetch current user's name
         const currentUserRows = await pool.query("SELECT username, nickname FROM users WHERE id = ?", [liker_id]);

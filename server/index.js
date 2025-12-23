@@ -9,6 +9,8 @@ dotenv.config();
 
 const { pool } = require('./db');
 
+const app = express();
+
 app.use((req, res, next) => {
   console.log(`[REQUEST_DEBUG] ${req.method} ${req.url} | Origin: ${req.headers.origin}`);
   next();
@@ -49,6 +51,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/analytics', require('./routes/analytics'));
 
 // Socket.io connection
 io.on('connection', (socket) => {

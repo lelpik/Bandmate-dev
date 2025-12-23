@@ -59,6 +59,9 @@ const Matching = () => {
         action
       });
       
+      // Log Analytics
+      api.logEvent('swipe', { likee_id: currentProfile.id, action });
+      
       if (res.data.isMatch) {
         toast.success(`You matched with ${currentProfile.nickname || currentProfile.username}!`, {
           duration: 4000,

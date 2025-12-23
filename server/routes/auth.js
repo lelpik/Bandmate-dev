@@ -43,6 +43,17 @@ router.post('/register', async (req, res) => {
 
     const token = jwt.sign({ id: userId, username }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '24h' });
     
+
+    // Log Analytics: Registration
+    try {
+      await pool.query(
+        "INSERT INTO analytics_events (user_id, event_type, event_data) VALUES (?, ?, ?)",
+        [userId, 'user_register', JSON.stringify({ email_domain: domain })]
+      );
+    } catch (err) {
+      console.error('Analytics Log Error (Register):', err);
+    }
+
     res.status(201).json({ token, user: { id: userId, username, email } });
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
@@ -77,6 +88,20 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '24h' });
     
+    // Log Analytics: Login
+    try {
+      await pool.query(
+        "INSERT INTO analytics_events (user_id, event_type, event_data) VALUES (?, ?, ?)",
+        [user.id, 'user_login', JSON.stringify({
+          client_ip: req.ip || req.connection.remoteAddress,
+          user_agent: req.headers['user-agent'] || 'unknown',
+          method: 'email'
+        })]
+      );
+    } catch (err) {
+      console.error('Analytics Log Error (Login):', err);
+    }
+
     // Don't send password hash back
     const { password_hash, ...userWithoutPassword } = user;
     res.json({ token, user: userWithoutPassword });

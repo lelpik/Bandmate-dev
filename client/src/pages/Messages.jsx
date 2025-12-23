@@ -61,6 +61,9 @@ const ChatWindow = () => {
       });
       setMessages([...messages, res.data]);
       setNewMessage('');
+      
+      // Log Analytics
+      api.logEvent('message_sent', { receiver_id: userId, type: 'text' });
     } catch (error) {
       console.error('Error sending message', error);
     }
